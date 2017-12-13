@@ -3,39 +3,39 @@
 #include <math.h>
 #include <time.h>
 
-//ó‹µİ’è(ƒL[ƒ{[ƒh“ü—Í‚Ìê‡‚Ì‚İg—ptext“Ç‚İ‚İ‚Ìê‡‚Í‚¢‚ç‚È‚¢)
-#define DIAPH	0.5			//‰ŠúÚG•s˜A‘±–Ê‚ÌˆÊ’u
-#define DOMLEN	1.0			//Tube‚Ì’·‚³
-#define CELLS	1000		//bin‚ÌŒÂ”(‰ğ‘œ“x)
-#define GAMMA	1.4			//”ä”M”ä
-#define MPA		1.0			//‹KŠi‰»’è”
-#define TIMEOUT	0.01		//o—ÍŠÔ
-#define dt		0.00078125	//ƒ^ƒCƒ€ƒXƒeƒbƒv
+//çŠ¶æ³è¨­å®š(ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰å…¥åŠ›ã®å ´åˆã®ã¿ä½¿ç”¨textèª­ã¿è¾¼ã¿ã®å ´åˆã¯ã„ã‚‰ãªã„)
+#define DIAPH	0.5		//åˆæœŸæ¥è§¦ä¸é€£ç¶šé¢ã®ä½ç½®
+#define DOMLEN	1.0		//Tubeã®é•·ã•
+#define CELLS	1000		//binã®å€‹æ•°(è§£åƒåº¦)
+#define GAMMA	1.4		//æ¯”ç†±æ¯”
+#define MPA	1.0		//è¦æ ¼åŒ–å®šæ•°
+#define TIMEOUT	0.01		//å‡ºåŠ›æ™‚é–“
+#define dt	0.00078125	//ã‚¿ã‚¤ãƒ ã‚¹ãƒ†ãƒƒãƒ—
 
-//ŠÖ”’è‹`
-//Star Region“à‚Ìˆ³—Í‚Æ‘¬“x‚Ì‚¨‚¨‚æ‚»‚Ì’l‚Å‚ ‚éˆ³—ÍPM‚Æ‘¬“xUM‚ğ‹‚ß‚éŠÖ”//Two rarefaction‹ß—
+//é–¢æ•°å®šç¾©
+//Star Regionå†…ã®åœ§åŠ›ã¨é€Ÿåº¦ã®ãŠãŠã‚ˆãã®å€¤ã§ã‚ã‚‹åœ§åŠ›PMã¨é€Ÿåº¦UMã‚’æ±‚ã‚ã‚‹é–¢æ•°//Two rarefactionè¿‘ä¼¼
 void GUESSP(double WL[4], double WR[4], double WS[4], double G[8]){
-	//•Ï”’è‹`
-	double PPV;			//pressure based on primitive variables(4.47)®QÆ
-	double PMIN,PMAX;	//¶‰E‚Ìˆ³—Í‚ğ”äŠr‚µC‘å¬‚ğ”äŠr‚·‚é‚½‚ß‚Ì‚à‚Ì
-	double QMAX;		//ˆ³—Í”ä
-	double QUSER = 2.0;	//ƒXƒCƒbƒ`ƒ“ƒOƒpƒ‰ƒ[ƒ^
-	double PQ,PTL,PTR;	//two rarefaction approximation‚ÌÛ‚Ég‚¤‚à‚Ì
-	double GEL,GER;		//two shock appriximation‚ÌÛ‚Ég‚¤‚à‚Ì
+	//å¤‰æ•°å®šç¾©
+	double PPV;			//pressure based on primitive variables(4.47)å¼å‚ç…§
+	double PMIN,PMAX;	//å·¦å³ã®åœ§åŠ›ã‚’æ¯”è¼ƒã—ï¼Œå¤§å°ã‚’æ¯”è¼ƒã™ã‚‹ãŸã‚ã®ã‚‚ã®
+	double QMAX;		//åœ§åŠ›æ¯”
+	double QUSER = 2.0;	//ã‚¹ã‚¤ãƒƒãƒãƒ³ã‚°ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+	double PQ,PTL,PTR;	//two rarefaction approximationã®éš›ã«ä½¿ã†ã‚‚ã®
+	double GEL,GER;		//two shock appriximationã®éš›ã«ä½¿ã†ã‚‚ã®
 	
 	//compute guess pressure from PVRS Riemann solver
-	PPV = ((WL[2]+WR[2])/2.0)+((WL[1]-WR[1])*(WL[0]+WR[0])*(WL[3]+WR[3])/8.0);	//PPV‚ÌŒvZ(4.47)®
-	PPV = fmax(0.0, PPV);		//0.0‚ÆPPV‚Ì‘å‚«‚¢‚Ù‚¤‚ğ‚Æ‚é
-	PMIN = fmin(WL[2], WR[2]);	//¶‰E‚Ì¬‚³‚¢‚Ù‚¤‚ğ‚Æ‚é
-	PMAX = fmax(WL[2], WR[2]);	//¶‰E‚Ì‘å‚«‚¢‚Ù‚¤‚ğ‚Æ‚é
-	QMAX = PMAX/PMIN;			//ˆ³—Í”ä
+	PPV = ((WL[2]+WR[2])/2.0)+((WL[1]-WR[1])*(WL[0]+WR[0])*(WL[3]+WR[3])/8.0);	//PPVã®è¨ˆç®—(4.47)å¼
+	PPV = fmax(0.0, PPV);		//0.0ã¨PPVã®å¤§ãã„ã»ã†ã‚’ã¨ã‚‹
+	PMIN = fmin(WL[2], WR[2]);	//å·¦å³ã®å°ã•ã„ã»ã†ã‚’ã¨ã‚‹
+	PMAX = fmax(WL[2], WR[2]);	//å·¦å³ã®å¤§ãã„ã»ã†ã‚’ã¨ã‚‹
+	QMAX = PMAX/PMIN;			//åœ§åŠ›æ¯”
 	
 	if(QMAX<=QUSER && (PMIN<=PPV && PPV<=PMAX)){
 		//select PVRS Riemann solver
-		WS[2] = PPV;		//Star Region‚Å‚Ìˆ³—Í‚ÍPPV‚Æ‚·‚é
+		WS[2] = PPV;		//Star Regionã§ã®åœ§åŠ›ã¯PPVã¨ã™ã‚‹
 	}
 	else if(PPV<PMIN){
-		//Two Rarefanction approximation (4.46)®
+		//Two Rarefanction approximation (4.46)å¼
 		PQ = pow((WL[2]/WR[2]),G[0]);
 		WS[1] = (PQ*WL[1]/WL[3]+WR[1]/WR[3]+G[3]*(PQ-1.0))/(PQ/WL[3]+1.0/WR[3]);
 		PTL = 1.0+G[6]*(WL[1]-WS[1])/WL[3];
@@ -45,7 +45,7 @@ void GUESSP(double WL[4], double WR[4], double WS[4], double G[8]){
 //		WS[2] = pow(((WL[3]+WR[3]-G[6]*(WR[1]-WL[1]))/(pow(WL[3]/WL[2],G[0])+pow(WR[3]/WR[2],G[0]))),G[2]);
 	}
 	else{
-		//select two-shock Riemann solver with PVRS as estimate (4.48)® ‚±‚ê‚ªÌ—p‚³‚ê‚é‚Í‚¸
+		//select two-shock Riemann solver with PVRS as estimate (4.48)å¼ ã“ã‚ŒãŒæ¡ç”¨ã•ã‚Œã‚‹ã¯ãš
 		GEL = sqrt((G[4]/WL[0])/(G[5]*WL[2]+PPV));
 		GER = sqrt((G[4]/WR[0])/(G[5]*WR[2]+PPV));
 		WS[2] = (GEL*WL[2]+GER*WR[2]-(WR[1]-WL[1]))/(GEL+GER);
@@ -53,9 +53,9 @@ void GUESSP(double WL[4], double WR[4], double WS[4], double G[8]){
 	}
 }
 
-//Riemann Solver‚Å‚ÌfŠÖ”‚ÌŒvZ(¶‘¤)
+//Riemann Solverã§ã®fé–¢æ•°ã®è¨ˆç®—(å·¦å´)
 void PREFUNL(double *FL, double *FLD, double WS[4], double WL[4], double G[8]){
-	double AL,BL,PRATL,QRTL;	//’è”A_K,B_K‚ÆF‚Ì‚½‚ß‚Ì‚à‚Ì
+	double AL,BL,PRATL,QRTL;	//å®šæ•°A_K,B_Kã¨Fã®ãŸã‚ã®ã‚‚ã®
 	if (WS[2]<WL[2]){
 		//rarefaction wave
 		PRATL = WS[2]/WL[2];
@@ -70,7 +70,7 @@ void PREFUNL(double *FL, double *FLD, double WS[4], double WL[4], double G[8]){
 		*FLD = (1.0 - (WS[2] - WL[2])/(2.0*(BL + WS[2])))*QRTL;
 	}
 }
-//Riemann Solver‚Å‚ÌfŠÖ”‚ÌŒvZ(‰E‘¤)
+//Riemann Solverã§ã®fé–¢æ•°ã®è¨ˆç®—(å³å´)
 void PREFUNR(double *FR, double *FRD, double WS[4], double WR[4], double G[8]){
 	double AR,BR,PRATR,QRTR;
 	if (WS[2]<WR[2]){
@@ -88,42 +88,42 @@ void PREFUNR(double *FR, double *FRD, double WS[4], double WR[4], double G[8]){
 	}
 }
 
-//Star Region‚É‚Ìˆ³—Í‚Æ‘¬“x‚ğ‹‚ß‚é‚½‚ß‚ÌŠÖ”
+//Star Regionã«ã®åœ§åŠ›ã¨é€Ÿåº¦ã‚’æ±‚ã‚ã‚‹ãŸã‚ã®é–¢æ•°
 void STARPU(double *P, double *U, double WL[4], double WR[4], double WS[4], double G[8]){
 	int i;
-	int NRITER = 10;					//”½•œ‰ñ”
-	double TOLPRE = 1/pow(10.0,6.0);	//p0‚Å‚ ‚é‚Æ‚¢‚¤ğŒ
-	double UDIFF;						//¶‰E”g‚Ì‘¬“x·
-	double FL,FLD,FR,FRD;				//¶‰E‚Ìˆ³—Í‚ÉŠÖ‚·‚éŠÖ”
-	double CHANGE;						//ˆ³—Í‚Ì·•ª
+	int NRITER = 10;					//åå¾©å›æ•°
+	double TOLPRE = 1/pow(10.0,6.0);	//p0ã§ã‚ã‚‹ã¨ã„ã†æ¡ä»¶
+	double UDIFF;						//å·¦å³æ³¢ã®é€Ÿåº¦å·®
+	double FL,FLD,FR,FRD;				//å·¦å³ã®åœ§åŠ›ã«é–¢ã™ã‚‹é–¢æ•°
+	double CHANGE;						//åœ§åŠ›ã®å·®åˆ†
 	
 	//Guessed value PSTART is computed
-	GUESSP(WL, WR ,WS, G);					//”½•œ‰ñ”‚ªŒ¸‚é‚æ‚¤‚Èˆ³—Í‚Ì„@
-	printf("guess result PM=%lf\n",WS[2]);	//„’èˆ³—Í‚Ìo—Í
+	GUESSP(WL, WR ,WS, G);					//åå¾©å›æ•°ãŒæ¸›ã‚‹ã‚ˆã†ãªåœ§åŠ›ã®æ¨å¯Ÿ
+	printf("guess result PM=%lf\n",WS[2]);	//æ¨å®šåœ§åŠ›ã®å‡ºåŠ›
 	
-	UDIFF = WR[1] - WL[1];		//”g‚Ì¶‰E‚Å‚Ì‘¬“x·ŒvZ
+	UDIFF = WR[1] - WL[1];		//æ³¢ã®å·¦å³ã§ã®é€Ÿåº¦å·®è¨ˆç®—
 	
 	printf("===========================================\n");
 	printf("Interation number:Change\n");
 	printf("===========================================\n");
 	for(i=1; i<=NRITER; i++)
 	{
-		PREFUNL(&FL, &FLD, WS, WL, G);				//ŠÖ”F‚ÌŒvZ(¶‘¤)
-		PREFUNR(&FR, &FRD, WS, WR, G);				//ŠÖ”F‚ÌŒvZ(‰E‘¤)
-		*P = WS[2]-(FL+FR+UDIFF)/(FLD+FRD);			//V‚½‚Èˆ³—Í‚ÌŒvZ(Newton–@)
-		CHANGE = 2.0*fabs((*P-WS[2]))/(*P+WS[2]);	//ˆ³—Í‚Ì•Ï‰»—Ê‚ğŒvZ
-		printf("i=%d, CHANGE=%lf\n",i,CHANGE);		//‰½‰ñ–Ú‚Ìinteration‚©‚Æˆ³—Í•Ï‰»—Ê‚Ìo—Í
+		PREFUNL(&FL, &FLD, WS, WL, G);			//é–¢æ•°Fã®è¨ˆç®—(å·¦å´)
+		PREFUNR(&FR, &FRD, WS, WR, G);			//é–¢æ•°Fã®è¨ˆç®—(å³å´)
+		*P = WS[2]-(FL+FR+UDIFF)/(FLD+FRD);		//æ–°ãŸãªåœ§åŠ›ã®è¨ˆç®—(Newtonæ³•)
+		CHANGE = 2.0*fabs((*P-WS[2]))/(*P+WS[2]);	//åœ§åŠ›ã®å¤‰åŒ–é‡ã‚’è¨ˆç®—
+		printf("i=%d, CHANGE=%lf\n",i,CHANGE);		//ä½•å›ç›®ã®interationã‹ã¨åœ§åŠ›å¤‰åŒ–é‡ã®å‡ºåŠ›
 		if(CHANGE<TOLPRE){
-			continue;								//•Ï‰»—Ê‚ª10^-6‚æ‚è‚à¬‚³‚¢‚Æ‚«‚Íinteration‚µ‚È‚¢
+			continue;				//å¤‰åŒ–é‡ãŒ10^-6ã‚ˆã‚Šã‚‚å°ã•ã„ã¨ãã¯interationã—ãªã„
 		}
 		if(*P<0.0){
-			*P=TOLPRE;								//ˆ³—Í‚ª•‰‚É‚È‚Á‚½‚ç‚»‚Ì‚Æ‚«‚ÍÅ‚à¬‚³‚¢10^-6‚Æ‚·‚é
+			*P=TOLPRE;				//åœ§åŠ›ãŒè² ã«ãªã£ãŸã‚‰ãã®ã¨ãã¯æœ€ã‚‚å°ã•ã„10^-6ã¨ã™ã‚‹
 		}
 		WS[2]=(*P);
-	}												//interation‚ÌI—¹
+	}//interationã®çµ‚äº†
 	
 		printf("Divergence in Newton-Raphson interation\n");
-		*U = (WL[1] + WR[1] + FR - FL)/2.0;			//interation‚Å‚í‚©‚Á‚½star region‚Å‚Ìˆ³—Í‚ğg‚Á‚Ä‘¬“x‚ğŒvZ
+		*U = (WL[1] + WR[1] + FR - FL)/2.0; //interationã§ã‚ã‹ã£ãŸstar regionã§ã®åœ§åŠ›ã‚’ä½¿ã£ã¦é€Ÿåº¦ã‚’è¨ˆç®—
 		WS[1]=(*U);
 		//Compute velocity in star region
 		printf("===========================================\n");
@@ -133,13 +133,13 @@ void STARPU(double *P, double *U, double WL[4], double WR[4], double WS[4], doub
 		printf("===========================================\n\n");
 }
 
-//Star Region“à‚Å‚Ìˆ³—Í‚Æ‘¬“x‚ª‚í‚©‚Á‚Ä‚¢‚ÄC”g‚Ìƒpƒ^[ƒ“‚²‚Æ‚Ì‰ğ‚ğ‹‚ß‚é
+//Star Regionå†…ã§ã®åœ§åŠ›ã¨é€Ÿåº¦ãŒã‚ã‹ã£ã¦ã„ã¦ï¼Œæ³¢ã®ãƒ‘ã‚¿ãƒ¼ãƒ³ã”ã¨ã®è§£ã‚’æ±‚ã‚ã‚‹
 void SAMPLE(double S, double WS[4], double W[4], double WL[4], double WR[4], double G[4]){
 	double SHL,STL;		//Left rarefaction head,tail
 	double SHR,STR;		//Right rarefaction head,tail
-	double CML,CMR;		//rarefaction“à‚Ì‰¹‘¬‚ÌŒvZ
-	double PML,PMR;		//SL,SR‚ğŒvZ‚·‚é‚½‚ß‚Ì‚à‚Ì
-	double SL,SR;		//¶‰E‚Ìshock‚Ì‘¬“x
+	double CML,CMR;		//rarefactionå†…ã®éŸ³é€Ÿã®è¨ˆç®—
+	double PML,PMR;		//SL,SRã‚’è¨ˆç®—ã™ã‚‹ãŸã‚ã®ã‚‚ã®
+	double SL,SR;		//å·¦å³ã®shockã®é€Ÿåº¦
 	
 	if (S<WS[1]){
 //		printf("check:first brench->");
@@ -147,7 +147,7 @@ void SAMPLE(double S, double WS[4], double W[4], double WL[4], double WR[4], dou
 		if(WS[2]<WL[2]){
 //			printf("check:left wave->");
 			//left rarefaction
-			SHL=WL[1]-WL[3];	//¶‘¤rarefaction‚Ì‘¬“x
+			SHL=WL[1]-WL[3];	//å·¦å´rarefactionã®é€Ÿåº¦
 			if(S<SHL){
 //				printf("check:left rarefaction in head.\n");
 				//samples point is lecft data state
@@ -240,63 +240,63 @@ void SAMPLE(double S, double WS[4], double W[4], double WL[4], double WR[4], dou
 }
 
 int main (void){
-	//ŠÔŒv‘ª‚ÌŠJn
+	//æ™‚é–“è¨ˆæ¸¬ã®é–‹å§‹
 	clock_t start,end;
 	start=clock();
 	printf("starttime[ms]:%d\n",start);
 	
-	//•Ï”’è‹`
-	double W[4],WL[4],WR[4],WS[4];	//•¨——Ê‚Ì”z—ñ(–§“x[0]C‘¬“x[1]Cˆ³—Í[2]C‰¹‘¬[3])
-	double G[8];			//ƒÁ‚Ì’l‚ÆƒÁ‚É‚æ‚éŠÖ”‚Ì’è‹`
-	double S;					//ÕŒ‚”g‚Ì‘¬“x
-	double DX;					//bin‚Ì’·‚³
-	double XPOS;				//xÀ•W
-	double P,U;					//Star Region‚Å‚Ìˆ³—ÍC‘¬“x‚ğ‹‚ß‚é‚½‚ß‚Ìƒ|ƒCƒ“ƒ^ˆµ‚¢
-	double t;					//ŠÔ
-	int i,t2=0;					//ƒ‹[ƒv—p•Ï”
+	//å¤‰æ•°å®šç¾©
+	double W[4],WL[4],WR[4],WS[4];	//ç‰©ç†é‡ã®é…åˆ—(å¯†åº¦[0]ï¼Œé€Ÿåº¦[1]ï¼Œåœ§åŠ›[2]ï¼ŒéŸ³é€Ÿ[3])
+	double G[8];			//Î³ã®å€¤ã¨Î³ã«ã‚ˆã‚‹é–¢æ•°ã®å®šç¾©
+	double S;			//è¡æ’ƒæ³¢ã®é€Ÿåº¦
+	double DX;			//binã®é•·ã•
+	double XPOS;			//xåº§æ¨™
+	double P,U;			//Star Regionã§ã®åœ§åŠ›ï¼Œé€Ÿåº¦ã‚’æ±‚ã‚ã‚‹ãŸã‚ã®ãƒã‚¤ãƒ³ã‚¿æ‰±ã„
+	double t;			//æ™‚é–“
+	int i,t2=0;			//ãƒ«ãƒ¼ãƒ—ç”¨å¤‰æ•°
 	
 	char filename[50];
 	
-	//”z—ñ‚Ì‰Šú‰»
+	//é…åˆ—ã®åˆæœŸåŒ–
 	for(i=0;i<4;i++){
 		W[i]=0.0;
 		WL[i]=0.0;
 		WR[i]=0.0;
 		WS[i]=0.0;
 	}
-//	printf("check:‰Šú‰»\n");
+//	printf("check:åˆæœŸåŒ–\n");
 	
-	//Set UpğŒ‚ğinitial_data.dat‚©‚ç“Ç‚İ‚Ş
-/*	double DIAPH;		//‰ŠúÚG•s˜A‘±–Ê‚ÌˆÊ’u
-	double DOMLEN;		//Tube‚Ì’·‚³
-	double CELLS;		//bin‚ÌŒÂ”(‰ğ‘œ“x)
-	double GAMMA;		//”ä”M”ä
-	double TIMEOUT;		//o—ÍŠÔ
-	double MPA;			//‹KŠi‰»’è”
+	//Set Upæ¡ä»¶ã‚’initial_data.datã‹ã‚‰èª­ã¿è¾¼ã‚€
+/*	double DIAPH;		//åˆæœŸæ¥è§¦ä¸é€£ç¶šé¢ã®ä½ç½®
+	double DOMLEN;		//Tubeã®é•·ã•
+	double CELLS;		//binã®å€‹æ•°(è§£åƒåº¦)
+	double GAMMA;		//æ¯”ç†±æ¯”
+	double TIMEOUT;		//å‡ºåŠ›æ™‚é–“
+	double MPA;		//è¦æ ¼åŒ–å®šæ•°
 	FILE *fp;
 	fp= fopen("initial_data.dat","r");
-	//‰Šúƒf[ƒ^“Ç‚İ‚İ
+	//åˆæœŸãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿
 	if((fp == NULL))
 	{
-		printf("‰Šúƒf[ƒ^‚ğ“Ç‚İ‚ß‚Ü‚¹‚ñ‚Å‚µ‚½D\n");
+		printf("åˆæœŸãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸï¼\n");
 		return 1;
 	}
 	fscanf(fp,"%lf,%lf,%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",&DOMLEN,&DIAPH,&CELLS,&GAMMA,&TIMEOUT,&(WL[0]),&(WL[1]),&(WL[2]),&(WR[0]),&(WR[1]),&(WR[2]),&MPA);
-		//•Ï”Šm”F—p•W€o—Í
+		//å¤‰æ•°ç¢ºèªç”¨æ¨™æº–å‡ºåŠ›
 		printf("=================================\n");
 		printf("Initial Condition.\n");
 		printf("DOMLEN=%lf\nDIAPH=%lf\nCELLS=%d\nGAMMA=%lf\nTIMEOUT=%d\nDL=%lf\nUL=%lf\nPL=%lf\nDR=%lf\nUR=%lf\nPR=%lf\nMPA=%lf\n",DOMLEN,DIAPH,CELLS,GAMMA,TIMEOUT,WL[0],WL[1],WL[2],WR[0],WR[1],WR[2],MPA);
 		printf("=================================\n");
 	fclose(fp);
 */	
-	//¶‘¤–§“xC‘¬“xCˆ³—Í‚Ì“ü—Í
+	//å·¦å´å¯†åº¦ï¼Œé€Ÿåº¦ï¼Œåœ§åŠ›ã®å…¥åŠ›
 	printf("Left Side 'density' 'velocity' 'pressure'=");
 	scanf("%lf%lf%lf",&(WL[0]),&(WL[1]),&(WL[2]));
-	//‰E‘¤–§“xC‘¬“xCˆ³—Í‚Ì“ü—Í
+	//å³å´å¯†åº¦ï¼Œé€Ÿåº¦ï¼Œåœ§åŠ›ã®å…¥åŠ›
 	printf("Right Side 'density' 'velocity' 'pressure'=");
 	scanf("%lf%lf%lf",&(WR[0]),&(WR[1]),&(WR[2]));
 	
-	//•Ï”Šm”F—p•W€o—Í
+	//å¤‰æ•°ç¢ºèªç”¨æ¨™æº–å‡ºåŠ›
 	printf("===========================================\n");
 	printf("Initial Condition.\n");
 	printf("(DL,UL,PL)=(%lf,%lf,%lf)\n",WL[0],WL[1],WL[2]);
@@ -305,7 +305,7 @@ int main (void){
 	printf("===========================================\n\n\n");
 	
 	
-	//GAMMA‚ÌŠÖ”‚ÌŒvZ
+	//GAMMAã®é–¢æ•°ã®è¨ˆç®—
 	G[0] = (GAMMA-1.0)/(2.0*GAMMA);
 	G[1] = (GAMMA+1.0)/(2.0*GAMMA);
 	G[2] = 2.0*GAMMA/(GAMMA-1.0);
@@ -315,11 +315,11 @@ int main (void){
 	G[6] = (GAMMA-1.0)/2.0;
 	G[7] = GAMMA-1.0; 
 	
-	//‰¹‘¬‚ÌŒvZ
+	//éŸ³é€Ÿã®è¨ˆç®—
 	WL[3] = sqrt(GAMMA*WL[2]/WL[0]);
 	WR[3] = sqrt(GAMMA*WR[2]/WR[0]);
 	
-	//^‹ó‚Íˆµ‚í‚È‚¢‚Ì‚ÅƒvƒƒOƒ‰ƒ€I—¹
+	//çœŸç©ºã¯æ‰±ã‚ãªã„ã®ã§ãƒ—ãƒ­ã‚°ãƒ©ãƒ çµ‚äº†
 	if (G[3]*(WL[3]+WR[3]) < (WR[1]-WL[1]))
 	{
 		//the initial data is such that vacuum is generated.program stopped.
@@ -327,25 +327,25 @@ int main (void){
 		return 1;
 	}
 	
-	//Star Region‚Å‚Ìˆ³—Í‚Æ‘¬“x‚ğ‹‚ß‚éŠÖ”‚ÌÀs
+	//Star Regionã§ã®åœ§åŠ›ã¨é€Ÿåº¦ã‚’æ±‚ã‚ã‚‹é–¢æ•°ã®å®Ÿè¡Œ
 	STARPU(&P,&U,WL,WR,WS,G);
 	
-	//bin•‚ÌŒvZ
+	//binå¹…ã®è¨ˆç®—
 	DX = DOMLEN/(double)CELLS;
 	
 
-	//TIMEOUT‚Ì‰ğ‚ğ‹‚ß‚é
+	//TIMEOUTæ™‚ã®è§£ã‚’æ±‚ã‚ã‚‹
 	while(t<=TIMEOUT){
 		FILE *fp;
 		sprintf(filename,"exact_%d.dat",t2);
 		fp = fopen(filename,"w");
 		for(i=1; i<=CELLS; i++){
-			XPOS = ((double)i-0.5)*DX;	//xÀ•W‚ÌŒvZ(‰½ŒÂ–Ú‚Ìbin‚©)
-			S = (XPOS-DIAPH)/t;			//‚»‚Ìx‚Å‚ÌTIMEOUT‚É‚¨‚¯‚é‰¹‘¬‚ÌŒvZ
+			XPOS = ((double)i-0.5)*DX;	//xåº§æ¨™ã®è¨ˆç®—(ä½•å€‹ç›®ã®binã‹)
+			S = (XPOS-DIAPH)/t;		//ãã®xã§ã®TIMEOUTæ™‚ã«ãŠã‘ã‚‹éŸ³é€Ÿã®è¨ˆç®—
 			
 			//solution at point (x,t)=(XPOS-DIAPH,TIMEPUT) is found
 			SAMPLE(S,WS,W,WL,WR,G);
-			//exact solution prifiles are written to exact.dat(xÀ•W‚Æ–§“xC‘¬“xCˆ³—ÍCƒGƒlƒ‹ƒM[‚Ìo—Í)
+			//exact solution prifiles are written to exact.dat(xåº§æ¨™ã¨å¯†åº¦ï¼Œé€Ÿåº¦ï¼Œåœ§åŠ›ï¼Œã‚¨ãƒãƒ«ã‚®ãƒ¼ã®å‡ºåŠ›)
 			fprintf(fp, "%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n", XPOS, W[0], W[1], W[2]/MPA, W[2]/(W[0]*G[7]*MPA));
 //			printf("FILE OUT:count %d\tXPOS=%lf\n",i,XPOS);
 		}
@@ -354,7 +354,7 @@ int main (void){
 		fclose(fp);
 	}
 	
-	/*Œv‘ªŠÔ‚ÌI—¹*/
+	/*è¨ˆæ¸¬æ™‚é–“ã®çµ‚äº†*/
 	end=clock();
 	printf("endtime:%d[ms]\n",end);
 	printf("uptime:%d[ms]\n",end-start);
